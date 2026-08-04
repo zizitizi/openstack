@@ -460,3 +460,11 @@ openstack keypair list
 ssh -i /path/to/your/mykey ubuntu@192.168.204.100
 ```
 
+
+
+
+refrence:
+https://superuser.openinfra.org/articles/kolla-ansible-openstack-installation-ubuntu-24-04/
+https://docs.openstack.org/kolla-ansible/latest/user/quickstart.html
+https://docs.openstack.org/project-deploy-guide/kolla-ansible/2026.1/quickstart.html#host-machine-requirements
+
