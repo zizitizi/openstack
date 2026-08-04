@@ -42,7 +42,7 @@ This repository is part of a larger series of tutorials that I am gradually prep
 
 The tutorials are organized into progressive stages. Each stage is designed to build upon the knowledge and experience gained in the previous one.
 
-### Stage 1: Simple OpenStack Lab
+### Stage 1: Simple OpenStack Lab (ZERO TO HERO)
 
 A beginner-friendly, all-in-one OpenStack lab environment designed for learning and experimentation.
 
@@ -61,7 +61,7 @@ The simple tutorial is available in the following directory:
 ```text
 simple-tutorial/
 
-
+```
 
 ---
 
