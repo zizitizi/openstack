@@ -63,7 +63,7 @@ We will use a static IP for the primary NIC (here ens33 on 192.168.204.92)
 
 We reserved a range of IPs on the subnet that are unused, consecutive, and not assigned to the router’s DHCP range. We will use an IP range of 44 IPs: 192.168.204.155 – 192.168.204.199
 
-We reserved one unused IP for the OpenStack connection; here 10.30.0.254.
+We reserved one unused IP for the OpenStack connection; here 192.168.204.254.
 
 ## Deployment and initialization Workflow
 The deployment process is divided into 5 distinct phases to ensure a clean, reproducible installation:
@@ -334,7 +334,7 @@ source venv/bin/activate
 
 
 New admin user (UI)
-Login to your OpenStack instance by going to the web dashboard (horizon, available on port 80) at http://10.30.0.20
+Login to your OpenStack instance by going to the web dashboard (horizon, available on port 80) at http://192.168.204.254
 
 The default admin user’s password can be obtained using:
 
@@ -416,14 +416,14 @@ There is no need to modify Availability Zone Hints or MTU
 Click Next.
 Subnet tab:
 Name it: a similar project-subnet.
-For the Network Address, use a private IP range not currently used in our network, such as 10.56.78.0/24; subnets must be independent and not currently in use.
+For the Network Address, use a private IP range not currently used in our network, such as 192.168.204.0/24; subnets must be independent and not currently in use.
 Select IPv4.
-Use 10.56.78.1 for the Gateway IP; it must be in the same IP range as your subnet.
+Use 192.168.204.2 for the Gateway IP; it must be in the same IP range as your subnet.
 Uncheck Disable Gateway.
 Click Next.
 Subnet Details tab:
 Check Enable DHCP. We want our VM instances to get IPs automatically when they start.
-For Allocation Pool use something unused within the subnet range, for example, 10.56.78.100,10.56.78.200.
+For Allocation Pool use something unused within the subnet range, for example, 192.168.204.155,192.168.204.199.
 DNS Name Servers (one entry per line) use Google (8.8.8.8, 8.8.4.4) or CloudFlare (1.1.1.1).
 No need to add any Host Routes.
 Click Create.
