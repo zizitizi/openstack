@@ -108,7 +108,7 @@ sudo chown nobody:nogroup /openstack/nfs
 sudo nano /etc/exports
 
 # Wihin this file: add the directory and the access host (ourselves, ie, our 10. IP) to the authorized list
-/openstack/nfs       10.30.0.20(rw,sync,no_subtree_check)
+/openstack/nfs       192.168.204.92(rw,sync,no_subtree_check)
 
 # After saving, restart the nfs server
 sudo systemctl restart nfs-kernel-server
@@ -118,7 +118,7 @@ sudo mkdir -p /etc/kolla/config
 sudo nano /etc/kolla/config/nfs_shares
 
 # Add the "remote" to mount in the file and save
-10.30.0.20:/openstack/nfs
+192.168.204.92:/openstack/nfs
 ```
 
 Kolla Ansible OpenStack (KAOS)
@@ -215,13 +215,22 @@ If all goes well, you will have a PLAY RECAP at the end of a successful install,
 ``` 
 PLAY RECAP ****...
 localhost                  : ok=425  changed=280  unreachable=0    failed=0    skipped=249  rescued=0    ignored=1
-The Dashboard will be on our host’s port 80 at http://10.30.0.20/. The admin user password can be found using:
 
- 
-fgrep keystone_admin_password /etc/kolla/passwords.yml
 ``` 
 
+after while:
+curl http://192.168.204.254
 
+open in browser:
+
+http://192.168.204.254
+
+Username: admin
+
+password: from 
+```
+sudo grep '^keystone_admin_password:' /etc/kolla/passwords.yml
+```
 
 
 ### Phase 3: Post-Deployment
@@ -300,19 +309,7 @@ cd /openstack/kaos
 source /etc/kolla/admin-openrc.sh
 source venv/bin/activate
 ```
-after while:
-curl http://192.168.204.254
 
-open in browser:
-
-http://192.168.204.254
-
-Username: admin
-
-password: from 
-```
-sudo grep '^keystone_admin_password:' /etc/kolla/passwords.yml
-```
 
 New admin user (UI)
 Login to your OpenStack instance by going to the web dashboard (horizon, available on port 80) at http://10.30.0.20
