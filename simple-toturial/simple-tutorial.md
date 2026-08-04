@@ -267,6 +267,21 @@ Cloud Init: Run once
 
 In /openstack/kaos, there is a venv/share/kolla-ansible/init-runonce script to create some of the basic configurations for your cloud. Most end users will modify their EXT_NET_CIDR, EXT_NET_RANGE, and EXT_NET_GATEWAY variables.
 
+```
+nano venv/share/kolla-ansible/init-runonce
+
+EXT_NET_CIDR=192.168.204.0/24
+
+EXT_NET_RANGE=
+start=192.168.204.155,end=192.168.204.199
+
+EXT_NET_GATEWAY=192.168.204.2
+
+#####after save run it###########
+
+./venv/share/kolla-ansible/init-runonce
+
+```
 The proposed my-init-runonce.sh executable (ie chmod +x it) script uses larger tiny images (5GB, as a Ubuntu server is over 2GB), and other instances only use a base image of 20GB (since you can specify your preferred disk image size during the instance creation process), its instance names following the m<number_of_cores> naming convention and adds xxlarge and xxxlarge memory instances.
 
 Adapt the USER CONF section based on your system and preferences.
