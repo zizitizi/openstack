@@ -1,0 +1,24 @@
+#cloud-config
+
+hostname: ubuntu01
+
+users:
+  - default
+
+ssh_pwauth: true
+
+chpasswd:
+  list: |
+    ubuntu:OpenStack123
+  expire: false
+
+package_update: true
+
+packages:
+  - qemu-guest-agent
+  - curl
+  - htop
+
+runcmd:
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
