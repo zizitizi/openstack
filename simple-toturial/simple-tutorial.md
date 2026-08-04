@@ -14,30 +14,55 @@ Before initiating the OpenStack deployment, ensure the target Ubuntu 24.04 node 
 - **Time/Date:** NTP/Chronyd configured to prevent clock skew across services.
 
 ---
-impotant note:
+**impotant note:**
 
-its importnat to use local proxy repository to use for apt - docker image - pypi ,... ex: setting up nexus repositiory
+*its importnat to use local proxy repository to use for apt - docker image - pypi ,... ex: setting up nexus repositiory*******
 
-Hardware:
+
+
+*Hardware:*
+
 Make sure virtualization is enabled in your host’s BIOS.
-Enough cores on the host to run the VMs: OpenStack is a cloud operating system. Learn more about it and its different services at https://www.openstack.org/
-At least 8GB RAM to run OpenStack, recommended a lot more to run the VMs themselves.
-We recommend at least 40GB of disk storage on the disk where the containers will be installed and a lot of extra storage for the VMs and disk images. We will use Cinder and NFS to store VM images.
+
+Enough resources on the host to run the VMs. in my case:
+
+16 G ram
+1*8 cpu
+120G HDD
+
+
+We will use Cinder and NFS to store VM images.
+
 2x physical NICs are needed. Their configuration is in /etc/netplan/50-cloud-init.yaml Here:
-eno1 is the primary NIC, with IP 10.30.0.20
+
+ens33 is the primary NIC, with IP 191.168.204.92
+
 Make sure to have dhcp6: false in the netplan for that section.
-enp1s0 is the secondary NIC, which should not have an IP assigned.
-Disable its DHCP, set dhcp4: false and dhcp6: false for enp1s0
+
+ens37 is the secondary NIC, which should not have an IP assigned.
+
+Disable its DHCP, set dhcp4: false and dhcp6: false for ens37
+
 To apply changes to the configuration file: sudo netplan apply
-A Linux host, here, an Ubuntu 24.04 server.
-With ssh set up.
-With system upgrades done, as needed.
-With a sudo-capable kaosu user for our OpenStack Kolla Ansible installation: sudo adduser kaosu; sudo usermod -aG sudo kaosu
-a /openstack directory for installing the different components: sudo mkdir /openstack
+
+
+
+With a sudo-capable kaosu user for our OpenStack Kolla Ansible installation: 
+
+sudo adduser kaosu; sudo usermod -aG sudo kaosu
+
+
+a /openstack directory for installing the different components: 
+
+sudo mkdir /openstack
+
 Networking with routing capabilities (i.e., a home router connecting to the internet). For our private network:
-The router’s gateway is 10.30.0.1.
-We will use a static IP for the primary NIC (here eno1 on 10.30.0.20).
-We reserved a range of IPs on the subnet that are unused, consecutive, and not assigned to the router’s DHCP range. We will use an IP range of 100 IPs: 10.30.0.100 – 10.30.0.199.
+The vmware gateway is 192.168.204.2
+
+We will use a static IP for the primary NIC (here ens33 on 192.168.204.92)
+
+We reserved a range of IPs on the subnet that are unused, consecutive, and not assigned to the router’s DHCP range. We will use an IP range of 44 IPs: 192.168.204.155 – 192.168.204.199
+
 We reserved one unused IP for the OpenStack connection; here 10.30.0.254.
 
 ## Deployment and initialization Workflow
