@@ -57,6 +57,9 @@ This stage focuses on:
 - Creating networks, images, flavors, projects, and instances
 - Practicing common troubleshooting procedures
 
-The completed tutorial is available in the following directory:
+The simple tutorial is available in the following directory:
 ```text
 simple-tutorial/
+
+
+other tutorial in conning Soon ....
