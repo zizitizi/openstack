@@ -211,15 +211,16 @@ Once the containers are successfully deployed, we finalize the environment setup
 
 OpenStack command line
 Install the python openstack command:
-
+```
 pip install python-openstackclient -c https://releases.openstack.org/constraints/upper/master
+```
 OpenStack configuration file
 Create multiple post-deployment scripts, including the admin-openrc.sh and cloud.yml files:
-
+```
 kolla-ansible post-deploy -i ./all-in-one
 That file should be added to your default config:
 
-kolla-ansible post-deploy -i ./all-in-one
+```
 Cloud Init: Run once
 (requires the venv, the openstack command line, the cloud.yml file, and the generated/etc/kolla/admin-openrc.sh script)
 
@@ -228,7 +229,7 @@ In /openstack/kaos, there is a venv/share/kolla-ansible/init-runonce script to c
 The proposed my-init-runonce.sh executable (ie chmod +x it) script uses larger tiny images (5GB, as a Ubuntu server is over 2GB), and other instances only use a base image of 20GB (since you can specify your preferred disk image size during the instance creation process), its instance names following the m<number_of_cores> naming convention and adds xxlarge and xxxlarge memory instances.
 
 Adapt the USER CONF section based on your system and preferences.
-
+```
 % ./my-init-runonce.sh
 [...]
 -- Attempt to add external-net (if not already present)
@@ -242,12 +243,14 @@ Adapt the USER CONF section based on your system and preferences.
 -- Creating defaults flavors (instance type) (if not already present)
 [...]
 Done
+```
 Once run, we should have:
 
 An external-net: the pool from which your floating IPs will be obtained.
 Added ssh and ICMP to the admin project’s default security group.
 Created a default ssh key (mykey) and added it to the admin user.
 Set the admin’s project default quotas (this will not propagate to other projects, but the CLI logic can with the right project_id).
+```
 Created a list of default flavors, such as:
 % source /etc/kolla/admin-openrc.sh
 % openstack flavor list
@@ -264,14 +267,14 @@ Created a list of default flavors, such as:
 | 8  | m32.xxxlarge | 65536 |   20 |         0 |    32 | True      |
 +----+--------------+-------+------+-----------+-------+-----------+
 FYSA: From the UI, it is possible to add new flavors from Admin -> Compute -> Flavors
-
+```
 Post-Installation
 Note: kolla-ansible or openstack requires the venv to be activated and source /etc/kolla/admin-openrc.sh to be performed for the commands to have the correct configuration information. As kaosu:
-
+```
 cd /openstack/kaos
 source /etc/kolla/admin-openrc.sh
 source venv/bin/activate
-
+```
 after while:
 curl http://192.168.204.254
 
