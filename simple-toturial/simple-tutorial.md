@@ -107,7 +107,7 @@ sudo chown nobody:nogroup /openstack/nfs
 # edit the `exports` configuration file
 sudo nano /etc/exports
 
-# Wihin this file: add the directory and the access host (ourselves, ie, our 10. IP) to the authorized list
+# Wihin this file: add the directory and the access host to the authorized list
 /openstack/nfs       192.168.204.92(rw,sync,no_subtree_check)
 
 # After saving, restart the nfs server
@@ -149,8 +149,8 @@ pip install -U pip
 pip install docker pkgconfig dbus-python
 
 # Install Kolla Ansible from git
-pip install git+https://opendev.org/openstack/kolla-ansible@master
-pip install "git+https://opendev.org/openstack/kolla-ansible@stable/2026.1#egg=kolla-ansible"
+
+
 pip install --no-cache-dir "git+https://opendev.org/openstack/kolla-ansible@stable/2026.1#egg=kolla-ansible"
 
 pip show kolla-ansible
@@ -168,15 +168,22 @@ kolla-ansible install-deps
 # generate random passwords (stored into /etc/kolla/passwords.yml)
 kolla-genpwd
 ```
-Edit and adapt the sudo nano /etc/kolla/globals.yml file as follows (search for matching keys):
+Edit and adapt the globals file as follows (search for matching keys):
 
-kolla_base_distro: "ubuntu”
-kolla_internal_vip_address: "10.30.0.254"
-network_interface: "eno1"
-neutron_external_interface: "enp1s0”
+```
+sudo nano /etc/kolla/globals.yml
+
+
+kolla_base_distro: "ubuntu"
+kolla_internal_vip_address: "192.168.204.254"
+network_interface: "ens33"
+neutron_external_interface: "ens37"
 enable_cinder: "yes"
 enable_cinder_backend_nfs: "yes"
-Before we try the deployment, let’s ensure the Python interpreter is the venv one: at the top of the /openstack/kaos/all-in-one file, add:
+docker_registry: "quay-repo.local"
+
+```
+also Before we try the deployment, let’s ensure the Python interpreter is the venv one: at the top of the /openstack/kaos/all-in-one file, add:
 
 ```
 
