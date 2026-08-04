@@ -46,6 +46,8 @@ The tutorials are organized into progressive stages. Each stage is designed to b
 
 A beginner-friendly, all-in-one OpenStack lab environment designed for learning and experimentation.
 
+full article and tutorial is ready [here](https://github.com/zizitizi/openstack/blob/main/simple-toturial/simple-tutorial.md).
+
 This stage focuses on:
 
 - Understanding the basic OpenStack architecture
