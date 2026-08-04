@@ -464,7 +464,7 @@ ls -alh /openstack/nfs will show the file for our newly created disk volume.
 
 
 
-###### Network and Router setup in neutron
+#### Network and Router setup in neutron
 
 From our new admin user’s UI (which should start in our recently added project), select 
 
