@@ -460,6 +460,8 @@ openstack keypair list
 
 ssh -i /path/to/your/mykey ubuntu@192.168.204.100
 ```
+ls -alh /openstack/nfs will show the file for our newly created disk volume.
+
 
 
 ###### Network and Router setup in neutron
@@ -543,7 +545,85 @@ The router has yet to be connected to the “project network.” Hover over the 
 
 When we return to the Network Topology page, we will see an external-net connected to our project-net by our project-router.
 
+The instance is designed to be remotely accessed using SSH. We need to assign our instance a “Floating IP”: a public IP address that can be dynamically associated with a private instance, allowing it to be accessible from outside the private cloud.
 
+**Floating IPs****
+
+With our instance Running, its IP Address is within our project’s subnet range.
+
+We need to obtain a Floating IP to access the instance via SSH.
+
+In the Actions (right) submenu for our instance row, select Associate 
+
+*Floating IP:*
+
+None are listed; click the + and Allocate IP from our external-net pool.
+
+An IP will now show in the IP Address dropdown. Make sure the Port to be associated matches our u24test instance and Associatethem.
+The IP Address column will now show two IPs: one from the project-subnet DHCP range and one from the external-net pool.
+
+From your kaosu user, we can ssh into the host’s created floating IP using the authorized ssh key and the default cloud image user of ubuntu.
+
+For example:
+
+``` 
+# Adapt the IP to match your floating IP
+ssh -i ~/.ssh/id_ecdsa ubuntu@192.168.204.190
+[...]
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.8.0-57-generic x86_64)
+[...]
+ubuntu@u24test:~$
+```
+
+From there, you can confirm that your instance can connect to the Internet by running sudo apt update && sudo apt -y upgrade.
+
+Securely accessing Horizon using a reverse proxy
+If you have a reverse proxy setup on another host and want to benefit from https on horizon (the dashboard):
+
+In your reverse proxy, configure the Proxy Host as you would typically; here, we will use os.example.com
+Run:
+
+```
+sudo nano /etc/kolla/horizon/_9999-custom-settings.py
+
+###and add to it:
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_TRUSTED_ORIGINS = [ 'https://os.example.com' ]
+```
+
+Restart horizon using docker kill horizon. Wait a few seconds, and your access via https://os.example.com should be functional
+ie, not present us with a csrf_failure=Origin checking failed - https%3A//os.example.com does not match any trusted origin error (in the address bar).
+FYSA, your installer has named all the containers using the name of the service they provide, so horizon is one of them
+
+## Troubleshooting
+
+“reconfigure” if you need to modify globals.yml
+If you modify a globals.yml configuration option,
+```
+cd /openstack/kaos
+source venv/bin/activate
+kolla-ansible reconfigure -i ./all-in-one
+```
+
+More kolla-ansible CLI options at https://docs.openstack.org/kolla-ansible/latest/user/operating-kolla.html.
+
+Broken after a Reboot?
+I experienced this in a previous installation. Luckily, it is just a matter of re-running the reconfigure step to make it functional again.
+
+Login as the kaosu user
+```
+cd /openstack/kaos
+source venv/bin/activate
+
+pip3 install -U pip
+
+kolla-ansible -i ./all-in-one --yes-i-really-really-mean-it stop
+kolla-ansible -i ./all-in-one install-deps
+kolla-ansible -i ./all-in-one prechecks
+kolla-ansible -i ./all-in-one reconfigure
+
+sudo docker ps -a
+```
 
 
 
