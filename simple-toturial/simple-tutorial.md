@@ -397,52 +397,9 @@ Use the openstack command line to add the image to the list of available images 
 openstack image create --disk-format qcow2 --container-format bare --public --property os_type=linux --file ubuntu2404-20250403.img ubuntu2404server-20250403
 
 ```
-Once completed, a table with details of the new image added to our OpenStack installation will appear. From our new admin user’s UI, select Project -> Compute -> Images, and we will see the added image listed.
+Once completed, a table with details of the new image added to our OpenStack installation will appear. 
 
-###### Network and Router setup in neutron
-From our new admin user’s UI (which should start in our recently added project), select Project -> Network -> Network Topology. This should show a graph with only the external-net.
-
-We need a network and a router added for VMs to communicate.
-
-Network
-Select Create Network
-
-Network tab:
-Name it: we recommend project-net with project reflecting our project’s name.
-Check Enable Admin State to make sure it is active.
-Uncheck Shared, this network is only for this project.
-Check Create Subnet; we need to configure the IP details for this subnet.
-There is no need to modify Availability Zone Hints or MTU
-Click Next.
-Subnet tab:
-Name it: a similar project-subnet.
-For the Network Address, use a private IP range not currently used in our network, such as 192.168.204.0/24; subnets must be independent and not currently in use.
-Select IPv4.
-Use 192.168.204.2 for the Gateway IP; it must be in the same IP range as your subnet.
-Uncheck Disable Gateway.
-Click Next.
-Subnet Details tab:
-Check Enable DHCP. We want our VM instances to get IPs automatically when they start.
-For Allocation Pool use something unused within the subnet range, for example, 192.168.204.155,192.168.204.199.
-DNS Name Servers (one entry per line) use Google (8.8.8.8, 8.8.4.4) or CloudFlare (1.1.1.1).
-No need to add any Host Routes.
-Click Create.
-You now have a new network ready to be used with VMs. We still need a router.
-
-Router
-Select Create Router:
-
-Name it: project-router.
-Check Enable Admin State to make sure it will be active.
-Select the external-net External Network.
-Check Enable SNAT since we do have an external network.
-Leave Availabilty Zone Hints as is.
-We now have a router connected to the external network. The IP for the router on the external network is automatically selected from the pool.
-
-The router has yet to be connected to the “project network.” Hover over the “router” and select Add Interface. Select the project-subnet Subnet and leave the IP Address unspecified; it will use the configured gateway.
-
-When we return to the Network Topology page, we will see an external-net connected to our project-net by our project-router.
-
+From our new admin user’s UI, select Project -> Compute -> Images, and we will see the added image listed.
 
 ### Phase 5: Creating the First Instance
 The final validation step. We launch a virtual machine (instance) to verify end-to-end connectivity, image booting, and network flow.
@@ -503,6 +460,89 @@ openstack keypair list
 
 ssh -i /path/to/your/mykey ubuntu@192.168.204.100
 ```
+
+
+###### Network and Router setup in neutron
+
+From our new admin user’s UI (which should start in our recently added project), select 
+
+Project -> Network -> Network Topology. 
+
+This should show a graph with only the external-net.
+
+We need a network and a router added for VMs to communicate.
+
+*Network*
+
+Select Create Network
+
+*Network tab:*
+
+Name it: we recommend project-net with project reflecting our project’s name.
+
+Check Enable Admin State to make sure it is active.
+
+Uncheck Shared, this network is only for this project.
+
+Check Create Subnet; we need to configure the IP details for this subnet.
+
+There is no need to modify Availability Zone Hints or MTU
+
+Click Next.
+
+*Subnet tab:*
+
+Name it: a similar project-subnet.
+
+For the Network Address, use a private IP range not currently used in our network, such as 192.168.204.0/24; 
+
+subnets must be independent and not currently in use.
+
+Select IPv4.
+
+Use 192.168.204.2 for the Gateway IP; it must be in the same IP range as your subnet.
+
+Uncheck Disable Gateway.
+
+Click Next.
+
+*Subnet Details tab:*
+
+Check Enable DHCP. We want our VM instances to get IPs automatically when they start.
+
+For Allocation Pool use something unused within the subnet range, for example, 192.168.204.155,192.168.204.199.
+
+DNS Name Servers (one entry per line) use Google (8.8.8.8, 8.8.4.4) or CloudFlare (1.1.1.1).
+
+No need to add any Host Routes.
+
+Click Create.
+
+You now have a new network ready to be used with VMs. We still need a router.
+
+*Router*
+
+Select Create Router:
+
+Name it: project-router.
+
+Check Enable Admin State to make sure it will be active.
+
+Select the external-net External Network.
+
+Check Enable SNAT since we do have an external network.
+
+Leave Availabilty Zone Hints as is.
+
+We now have a router connected to the external network. 
+
+The IP for the router on the external network is automatically selected from the pool.
+
+
+The router has yet to be connected to the “project network.” Hover over the “router” and select Add Interface. Select the project-subnet Subnet and leave the IP Address unspecified; it will use the configured gateway.
+
+When we return to the Network Topology page, we will see an external-net connected to our project-net by our project-router.
+
 
 
 
