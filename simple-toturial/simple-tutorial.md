@@ -20,14 +20,14 @@ Before initiating the OpenStack deployment, ensure the target Ubuntu 24.04 node 
 
 
 
-*Hardware:*
+###### Hardware:
 
 Make sure virtualization is enabled in your host’s BIOS.
 
 Enough resources on the host to run the VMs. in my case:
 
-16 G ram
-1*8 cpu
+16 G ram,
+1*8 cpu,
 120G HDD
 
 
@@ -209,14 +209,23 @@ cd /openstack/kaos
 source venv/bin/python/activate || source venv/bin/activate
 ```
 Bootstrap the host:
+```
 kolla-ansible bootstrap-servers -i ./all-in-one
+```
 Do pre-deployment checks for the host:
+```
 kolla-ansible prechecks -i ./all-in-one
+```
 pull all required images
+```
 kolla-ansible pull -i ./all-in-one
+```
 
 Perform the OpenStack deployment:
+```
 kolla-ansible deploy -i ./all-in-one
+```
+
 If all goes well, you will have a PLAY RECAP at the end of a successful install, which might look similar to the following:
 
 ``` 
