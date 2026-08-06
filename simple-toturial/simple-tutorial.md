@@ -636,7 +636,7 @@ nano terraform.tfvars
 image_name            = "ubuntu26-20260720"
 flavor_name           = "m1.small"
 internal_network_name = "demo-net"
-external_network_name = "public"
+external_network_name = "public1"
 region_name           = "RegionOne"
 keypair_name          = "zizi"
 public_key_file       = "~/.ssh/id_ed25519.pub"
@@ -939,10 +939,18 @@ Outputs:
 instance_ip = "10.0.0.219"
 
 
-
-terraform output -raw floating_ip
-terraform output -raw ssh_command
+terraform output
+terraform output floating_ip
+terraform output ssh_command
 terraform output -raw password
+floating_ip = "192.168.204.163"
+password = <sensitive>
+ssh_command = "ssh ubuntu@192.168.204.163"
+"192.168.204.163"
+"ssh ubuntu@192.168.204.163"
+123
+
+
 
 ```
 
