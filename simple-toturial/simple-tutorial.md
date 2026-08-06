@@ -16,7 +16,9 @@ Before initiating the OpenStack deployment, ensure the target Ubuntu 24.04 node 
 ---
 **impotant note:**
 
-*its importnat to use local proxy repository to use for apt - docker image - pypi ,... ex: setting up nexus repositiory*******
+*Its importnat to use local proxy repository to use for apt - docker image - pypi ,... ex: setting up nexus repositiory
+Also make sure you have terraform node to implement vm to openstack with terraform (IAC)
+*******
 
 
 
@@ -603,6 +605,355 @@ CSRF_TRUSTED_ORIGINS = [ 'https://os.example.com' ]
 Restart horizon using docker kill horizon. Wait a few seconds, and your access via https://os.example.com should be functional
 ie, not present us with a csrf_failure=Origin checking failed - https%3A//os.example.com does not match any trusted origin error (in the address bar).
 FYSA, your installer has named all the containers using the name of the service they provide, so horizon is one of them
+
+
+###### Implement vm via terraform
+
+in terraform node add a working directory for your project:
+```
+su -
+mkdir tr-os
+cd tr-os/
+nano admin-openrc.sh
+chmod +x admin-openrc.sh
+source ~/tr-os/admin-openrc.sh
+
+nano providers.tf
+
+terraform {
+  required_version = ">= 1.0.0"
+  required_providers {
+    openstack = {
+      source  = "terraform-provider-openstack/openstack"
+      version = "~> 2.1.0" 
+    }
+  }
+}
+provider "openstack" {}
+
+nano terraform.tfvars
+
+image_name            = "ubuntu26-20260720"
+flavor_name           = "m1.small"
+internal_network_name = "demo-net"
+external_network_name = "public"
+region_name           = "RegionOne"
+keypair_name          = "zizi"
+public_key_file       = "~/.ssh/id_ed25519.pub"
+vm_name               = "ubuntu-26-terraform-demo"
+admin_password        = "123"
+
+
+
+nano main.tf
+
+terraform {
+  required_version = ">= 1.3.0"
+
+  required_providers {
+    openstack = {
+      source  = "terraform-provider-openstack/openstack"
+      version = "2.1.0"
+    }
+  }
+}
+
+provider "openstack" {
+  # Credentials از محیط (admin-openrc.sh) خوانده می‌شود.
+}
+
+###############################################################################
+# Variables
+###############################################################################
+
+variable "region_name" {
+  description = "OpenStack region"
+  type        = string
+  default     = "RegionOne"
+}
+
+variable "image_name" {
+  description = "Image name in OpenStack"
+  type        = string
+  default     = "ubuntu26-20260720"
+}
+
+variable "flavor_name" {
+  description = "Flavor name"
+  type        = string
+  default     = "m1.small"
+}
+
+variable "internal_network_name" {
+  description = "Tenant internal network name"
+  type        = string
+  default     = "demo-net"
+}
+
+variable "external_network_name" {
+  description = "External network name for Floating IP (set in terraform.tfvars)"
+  type        = string
+}
+
+variable "keypair_name" {
+  description = "Keypair name"
+  type        = string
+  default     = "zizi"
+}
+
+variable "public_key_file" {
+  description = "Path to SSH public key"
+  type        = string
+  default     = "~/.ssh/id_ed25519.pub"
+}
+
+variable "vm_name" {
+  description = "VM name"
+  type        = string
+  default     = "ubuntu-26-terraform-demo"
+}
+
+variable "admin_password" {
+  description = "Password for default ubuntu user (cloud-init)."
+  type        = string
+  sensitive   = true
+  default     = "123"
+}
+
+###############################################################################
+# Data sources
+###############################################################################
+
+data "openstack_images_image_v2" "ubuntu" {
+  name        = var.image_name
+  most_recent = true
+}
+
+data "openstack_compute_flavor_v2" "vm_flavor" {
+  name = var.flavor_name
+}
+
+data "openstack_networking_network_v2" "internal_network" {
+  name = var.internal_network_name
+}
+
+data "openstack_networking_network_v2" "external_network" {
+  name     = var.external_network_name
+  external = true
+}
+
+###############################################################################
+# Keypair
+###############################################################################
+
+resource "openstack_compute_keypair_v2" "my_keypair" {
+  name       = var.keypair_name
+  public_key = file(pathexpand(var.public_key_file))
+}
+
+###############################################################################
+# Security Group + Rules
+###############################################################################
+
+resource "openstack_networking_secgroup_v2" "ubuntu_secgroup" {
+  name        = "${var.vm_name}-secgroup"
+  description = "Security group for ${var.vm_name}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "ssh" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 22
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.ubuntu_secgroup.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "icmp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "icmp"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.ubuntu_secgroup.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "egress_ipv4" {
+  direction         = "egress"
+  ethertype         = "IPv4"
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.ubuntu_secgroup.id
+}
+
+###############################################################################
+# cloud-init (enable password login)
+###############################################################################
+
+locals {
+  cloud_init = <<-CLOUD_CONFIG
+    #cloud-config
+    hostname: ${var.vm_name}
+    manage_etc_hosts: true
+
+    users:
+      - default
+
+    ssh_pwauth: true
+
+    chpasswd:
+      expire: false
+      list:
+        - ubuntu:${var.admin_password}
+
+    runcmd:
+      - systemctl enable ssh || true
+      - systemctl restart ssh || true
+  CLOUD_CONFIG
+}
+
+###############################################################################
+# Compute instance
+###############################################################################
+
+resource "openstack_compute_instance_v2" "ubuntu_vm" {
+  name            = var.vm_name
+  image_id        = data.openstack_images_image_v2.ubuntu.id
+  flavor_id       = data.openstack_compute_flavor_v2.vm_flavor.id
+  key_pair        = openstack_compute_keypair_v2.my_keypair.name
+  security_groups = [openstack_networking_secgroup_v2.ubuntu_secgroup.name]
+  region          = var.region_name
+
+  user_data = local.cloud_init
+
+  network {
+    uuid = data.openstack_networking_network_v2.internal_network.id
+  }
+}
+
+###############################################################################
+# Floating IP + Associate
+###############################################################################
+
+resource "openstack_networking_floatingip_v2" "ubuntu_vm_fip" {
+  pool   = data.openstack_networking_network_v2.external_network.name
+  region = var.region_name
+}
+
+resource "openstack_compute_floatingip_associate_v2" "ubuntu_vm_fip_association" {
+  floating_ip = openstack_networking_floatingip_v2.ubuntu_vm_fip.address
+  instance_id = openstack_compute_instance_v2.ubuntu_vm.id
+  region      = var.region_name
+}
+
+###############################################################################
+# Outputs
+###############################################################################
+
+output "floating_ip" {
+  description = "Floating IP"
+  value       = openstack_networking_floatingip_v2.ubuntu_vm_fip.address
+}
+
+output "ssh_command" {
+  description = "SSH command"
+  value       = "ssh ubuntu@${openstack_networking_floatingip_v2.ubuntu_vm_fip.address}"
+}
+
+output "password" {
+  description = "Ubuntu user password"
+  value       = var.admin_password
+  sensitive   = true
+}
+
+
+
+
+```
+
+on openstack node check this:
+```
+(venv) root@os:/openstack/kaos# openstack token issue
++------------+-------------------------------------------------------------------------------------------------------------------------+
+| Field      | Value                                                                                                                   |
++------------+-------------------------------------------------------------------------------------------------------------------------+
+| expires    | 2026-08-07T10:43:22+0000                                                                                                |
+| id         | gAAAAABqdGVKDXjsq-jtzmgcvLfLTYOMz_XQ7uf8PShHRg2rnYHtWHgj4vcnGftV2UYqzTGRVcLs_2C_QmTaImEPw_86qN0DOFudq_hGiqeyatEjbbzVzS- |
+|            | t5VVuECLsmbAD9z7f38KL-jabU6CzoB5zbW6CO4Z8ay14UandIixbeUJEe6jVcgw                                                        |
+| project_id | 6ca11d405f404fb09ba4ec14f730b1e2                                                                                        |
+| user_id    | 669e59975fcc46fbadfa77d672492300                                                                                        |
++------------+-------------------------------------------------------------------------------------------------------------------------+
+(venv) root@os:/openstack/kaos# 
+
+```
+on terraform node :
+```
+source ~/tr-os/admin-openrc.sh
+terraform fmt
+terraform init
+terraform validate
+terraform providers
+terraform plan
+terraform plan -out=tfplan
+terraform apply tfplan
+
+
+terraform show tfplan
+terraform apply tfplan
+```
+after apply successed you can see output:
+```
+root@utilsrv:~/tr-os# terraform apply tfplan-new
+openstack_compute_keypair_v2.my_keypair: Creating...
+openstack_networking_secgroup_v2.secgroup_ssh: Creating...
+openstack_networking_secgroup_v2.secgroup_ssh: Creation complete after 0s [id=21015aa0-189f-4726-b958-3c272c6b95dd]
+openstack_networking_secgroup_rule_v2.rule_ssh: Creating...
+openstack_networking_secgroup_rule_v2.rule_icmp: Creating...
+openstack_compute_keypair_v2.my_keypair: Creation complete after 1s [id=zizi]
+openstack_compute_instance_v2.ubuntu_vm: Creating...
+openstack_networking_secgroup_rule_v2.rule_icmp: Creation complete after 1s [id=3d1b4d8d-8932-4986-9ef8-9c974ae661f5]
+openstack_networking_secgroup_rule_v2.rule_ssh: Creation complete after 1s [id=aaa2cf2e-9b51-4901-b676-b388fa080d35]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [00m10s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [00m20s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [00m30s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [00m40s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [00m50s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [01m00s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [01m10s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [01m20s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [01m30s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Still creating... [01m40s elapsed]
+openstack_compute_instance_v2.ubuntu_vm: Creation complete after 1m45s [id=445f4074-6f60-42e9-a8ff-67cd1292ffbd]
+
+Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+instance_ip = "10.0.0.219"
+
+
+
+terraform output -raw floating_ip
+terraform output -raw ssh_command
+terraform output -raw password
+
+```
+
+on openstack node check instance:
+```
+(venv) root@os:/openstack/kaos# openstack server list --name ubuntu-26-terraform-demo
++--------------------------------------+--------------------------+--------+---------------------+-------------------+----------+
+| ID                                   | Name                     | Status | Networks            | Image             | Flavor   |
++--------------------------------------+--------------------------+--------+---------------------+-------------------+----------+
+| 445f4074-6f60-42e9-a8ff-67cd1292ffbd | ubuntu-26-terraform-demo | ACTIVE | demo-net=10.0.0.219 | ubuntu26-20260720 | m1.small |
++--------------------------------------+--------------------------+--------+---------------------+-------------------+----------+
+(venv) root@os:/openstack/kaos# 
+```
+
+
+
+
+
+
 
 ## Troubleshooting
 
