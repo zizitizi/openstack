@@ -886,6 +886,14 @@ on openstack node check this:
 
 ```
 on terraform node :
+
+check connectivity with VIP of AIO :
+```
+arping -I ens33 -c 5 192.168.204.254
+ping -c 4 192.168.204.254
+```
+if ok then :
+
 ```
 source ~/tr-os/admin-openrc.sh
 terraform fmt
